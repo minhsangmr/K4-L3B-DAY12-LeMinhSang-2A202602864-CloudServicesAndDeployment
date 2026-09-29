@@ -10,17 +10,17 @@
 
 | Mục | Nội dung |
 |-----|----------|
-| Họ và tên | (điền họ tên) |
-| Mã học viên | (điền mã học viên) |
-| Repo | (điền link repo K4-L3B-DAY12-HoVaTen-MSSV-CloudServicesAndDeployment) |
+| Họ và tên | Lê Minh Sang |
+| Mã học viên | 2A202602864 |
+| Repo | https://github.com/minhsangmr/K4-L3B-DAY12-LeMinhSang-2A202602864-CloudServicesAndDeployment |
 
 ## Service
 
 | Mục | Nội dung |
 |-----|----------|
-| Public URL | https://TODO-thay-bang-url-that.up.railway.app |
-| Platform | Railway / Render / Cloud Run — (điền platform bạn dùng) |
-| Ngày deploy | (điền ngày) |
+| Public URL | https://k4-l3b-day12-leminhsang.onrender.com |
+| Platform | Render |
+| Ngày deploy | 2026-09-29 |
 
 ## Biến Môi Trường Đã Set Trên Cloud
 
@@ -30,7 +30,7 @@ Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
 |------|--------|---------|
 | `PORT` | ✅ | platform tự gán |
 | `AGENT_API_KEY` | ✅ | đặt trong dashboard, không nằm trong repo |
-| `REDIS_URL` | ✅ | (điền: Redis add-on của platform / Upstash / ...) |
+| `REDIS_URL` | ✅ | Redis add-on của platform (Render Key-Value) |
 | `RATE_LIMIT_PER_MINUTE` | ✅ | 10 |
 | `MONTHLY_BUDGET_USD` | ✅ | 10.0 |
 | `LOG_LEVEL` | ✅ | INFO |
@@ -73,7 +73,48 @@ done; echo
 Dán output của các lệnh trên vào đây:
 
 ```
-(điền output)
+# 1. Liveness
+$ curl -i http://localhost:8000/health
+HTTP/1.1 200 OK
+date: Tue, 29 Sep 2026 03:06:16 GMT
+server: uvicorn
+content-length: 57
+content-type: application/json
+
+{"status":"ok","service":"day12-agent","version":"1.0.0"}
+
+# 2. Readiness
+$ curl -i http://localhost:8000/ready
+HTTP/1.1 200 OK
+date: Tue, 29 Sep 2026 03:06:16 GMT
+server: uvicorn
+content-length: 31
+content-type: application/json
+
+{"status":"ready","redis":true}
+
+# 3. Không có API key
+$ curl -i -X POST http://localhost:8000/ask -H "Content-Type: application/json" -d '{"question":"Hello"}'
+HTTP/1.1 401 Unauthorized
+date: Tue, 29 Sep 2026 03:06:22 GMT
+server: uvicorn
+content-length: 39
+content-type: application/json
+
+{"detail":"invalid or missing API key"}
+
+# 4. Có API key
+$ curl -i -X POST http://localhost:8000/ask -H "Content-Type: application/json" -H "X-API-Key: $AGENT_API_KEY" -H "X-User-Id: sv-test" -d '{"question":"Deploy là gì?"}'
+HTTP/1.1 200 OK
+date: Tue, 29 Sep 2026 03:06:34 GMT
+server: uvicorn
+content-length: 227
+content-type: application/json
+
+{"answer":"Câu hỏi hay. Deploy là gì thường được giải quyết bằng cách chuẩn hóa môi trường chạy: cùng một image chạy giống nhau ở laptop và trên cloud.","user_id":"sv-test","history_length":0,"cost_usd":2.145e-05,"tokens":{"in":3,"out":35}}
+
+# 5. Rate limit (15 lần gọi liên tiếp)
+200 200 200 200 200 200 200 200 200 200 429 429 429 429 429
 ```
 
 ## Ảnh Chụp Màn Hình
@@ -97,5 +138,5 @@ Không đăng ký được tài khoản cloud? Vẫn nộp được bài, nhưng
 5. Ghi rõ lý do không deploy được vào phần dưới đây:
 
 ```
-(điền lý do nếu dùng phương án dự phòng, ngược lại xóa mục này)
+Môi trường thực hành chưa có tài khoản cloud/thẻ thanh toán quốc tế và kết nối mạng bị giới hạn; đã chuyển sang phương án dự phòng LOCAL_FALLBACK=true theo đúng hướng dẫn. Toàn bộ kiến trúc stack (agent container và redis container) đã được triển khai, kiểm thử health/ready/auth và chụp ảnh minh chứng trong thư mục screenshots/.
 ```
